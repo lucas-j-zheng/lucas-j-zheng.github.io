@@ -9,14 +9,13 @@ redirect_from:
 
 Welcome! I'm Lucas J. Zheng, a Software Engineer and Researcher at Brown University.
 
-I'm passionate about building software and conducting research at the intersection of technology and real-world problems. This portfolio showcases my projects, publications, and professional journey.
+I'm a member of [The Intelligent Robot Lab](https://irl.cs.brown.edu/) under Professor George Konidaris, currently researching hierarchical reinforcement learning in sparse-reward environments (Montezuma's Revenge).
 
 ## Research Interests
 
-*Add your research interests here - for example:*
-- Machine Learning & AI
-- Systems Programming
-- Data Science
+- Machine Learning
+- Artificial Intelligence
+- Reinforcement Learning
 
 ## Recent Work
 
