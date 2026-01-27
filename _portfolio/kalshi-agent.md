@@ -2,6 +2,7 @@
 title: "Kalshi Alpha Agent"
 excerpt: "Natural language to prediction market trades with human-in-the-loop approval"
 collection: portfolio
+date: 2024-01-01
 ---
 
 [Try the Demo](https://huggingface.co/spaces/lzheng35/kalshi-alpha-agent) | [View on GitHub](https://github.com/lucas-j-zheng/kalshi-agent)

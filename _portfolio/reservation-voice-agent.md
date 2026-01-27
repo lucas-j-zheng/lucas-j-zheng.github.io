@@ -2,6 +2,7 @@
 title: "Restaurant Voice Agent"
 excerpt: "AI-powered voice assistant that calls restaurants to make reservations and check wait times"
 collection: portfolio
+date: 2025-05-01
 ---
 
 [View on GitHub](https://github.com/lucas-j-zheng/reservation-voice-agent)

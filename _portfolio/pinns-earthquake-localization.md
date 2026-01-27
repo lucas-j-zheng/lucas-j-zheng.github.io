@@ -2,6 +2,7 @@
 title: "Earthquake Source Localization with RL-Enhanced PINNs"
 excerpt: "Combining Physics-Informed Neural Networks with reinforcement learning for seismic source prediction"
 collection: portfolio
+date: 2025-04-01
 ---
 
 [View on GitHub](https://github.com/lucas-j-zheng/PINNs-2470-final)

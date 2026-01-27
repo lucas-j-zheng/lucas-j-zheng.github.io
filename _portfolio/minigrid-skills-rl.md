@@ -2,6 +2,7 @@
 title: "MiniGrid Skills RL"
 excerpt: "Hierarchical reinforcement learning research investigating skill-based approaches in simplified Montezuma's Revenge environments"
 collection: portfolio
+date: 2025-03-01
 ---
 
 [View on GitHub](https://github.com/lucas-j-zheng/minigrid_skills_rl)

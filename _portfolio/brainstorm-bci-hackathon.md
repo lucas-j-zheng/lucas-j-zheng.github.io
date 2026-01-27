@@ -2,6 +2,7 @@
 title: "BCI Surgical Placement Visualization Tool"
 excerpt: "2nd Place Winner - Brainstorm Precision Neuroscience BCI Hackathon 2026"
 collection: portfolio
+date: 2026-01-01
 ---
 
 [View on GitHub](https://github.com/AravindKrishnanA/brainstorm-track2-public) | [Watch Demo](https://www.youtube.com/watch?v=a3brRuCG1hk)
