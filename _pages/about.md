@@ -20,7 +20,7 @@ I'm passionate about building software and conducting research at the intersecti
 
 ## Recent Work
 
-Check out my [Portfolio](/portfolio/) to see my latest projects, or browse my [Publications](/publications/) for research work.
+Check out my [Portfolio](/portfolio/) to see my latest projects.
 
 ## Get in Touch
 
