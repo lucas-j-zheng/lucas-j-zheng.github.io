@@ -2,7 +2,7 @@
 title: "Agency Copilot"
 excerpt: "All-in-one platform for sports agents to track player stats across NBA, WNBA, and college basketball"
 collection: portfolio
-date: 2025-06-01
+order: 5
 ---
 
 [View Live App](https://agency-copilot.vercel.app/)
