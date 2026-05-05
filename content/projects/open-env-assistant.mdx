@@ -1,0 +1,22 @@
+---
+title: "OpenEnv Personal Assistant"
+date: "2026-03-01"
+description: "An RL environment where an agent manages a team calendar under shifting rules, evolving constraints, and ambiguous inbox requests"
+tags: ["reinforcement learning", "hackathon", "OpenEnv"]
+links:
+  GitHub: "https://github.com/lucas-j-zheng/open-env-assistant-environment"
+featured: true
+---
+
+An RL environment where an agent manages a team calendar under shifting rules, evolving constraints, and ambiguous inbox requests. Built with the OpenEnv framework for the OpenEnv Hackathon (March 2026).
+
+## How It Works
+
+- **`reset(seed)`** generates an initial calendar + inbox (4–7 events, 11 messages, 2 personal events)
+- **`step(action)`** fires interrupts (if due), dispatches a tool call, and recomputes 18 flags
+- **Reward** = flags earned / 18; episode ends when all 18 flags are earned
+- Actions are JSON tool calls (e.g., `{"tool": "create_event", "args": {"title": "Standup", ...}}`)
+
+## Schema Drift
+
+The environment changes mid-episode through 7 randomized interrupts: CEO emergencies, meeting cancellations, reschedule requests, and more — forcing the agent to adapt on the fly.

@@ -1,0 +1,26 @@
+---
+title: "HRL with Built-In Options in Montezuma's Revenge"
+date: "2025-09-01"
+description: "Solving Montezuma's Revenge using DQN with hardcoded options and exploration strategies including CFN and RMAX"
+tags: ["hierarchical RL", "Montezuma's Revenge", "DQN", "exploration"]
+links:
+  GitHub: "https://github.com/lucas-j-zheng/minigrid_skills_rl"
+  Lab: "http://irl.cs.brown.edu/"
+---
+
+Research at Prof. George Konidaris' Intelligent Robot Lab investigating hierarchical reinforcement learning approaches to Montezuma's Revenge using built-in (hardcoded) options.
+
+## Approach
+
+We use DQN as the base learner over a set of predefined skill primitives (options) that abstract away low-level control — navigating to keys, opening doors, climbing ladders. The agent learns a policy over these options rather than over primitive actions.
+
+To address the sparse reward and hard exploration challenges inherent to Montezuma's Revenge, we investigate structured exploration strategies:
+
+- **CFN (Count-Based Frequency Novelty):** Drives exploration by rewarding visits to novel state-option pairs, encouraging the agent to try underexplored skills in underexplored states
+- **RMAX:** Assigns optimistic reward estimates to insufficiently visited state-option pairs, guaranteeing exploration of the full reachable state space under the options
+
+## Research Questions
+
+- How far can hardcoded options take you in Montezuma's Revenge when paired with strong exploration?
+- Which exploration strategies are most effective at the option level vs. the primitive action level?
+- Where do built-in options bottleneck performance — is it the option set itself or the policy learning over them?

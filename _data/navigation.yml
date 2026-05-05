@@ -1,9 +1,0 @@
-# Navigation menu configuration
-# Changing the order here will adjust the order in the header
-
-main:
-  - title: "Portfolio"
-    url: /portfolio/
-
-  - title: "CV"
-    url: /cv/

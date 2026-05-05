@@ -1,0 +1,22 @@
+---
+title: "Concurrent Learning of Option Policies and Selection"
+date: "2026-01-15"
+description: "Jointly learning higher-level option selection policies and lower-level intra-option policies in hierarchical RL"
+tags: ["hierarchical RL", "options framework", "concurrent learning"]
+links:
+  GitHub: "https://github.com/lucas-j-zheng/minigrid_skills_rl"
+  Lab: "http://irl.cs.brown.edu/"
+---
+
+Research at Prof. George Konidaris' Intelligent Robot Lab on simultaneously learning both levels of the hierarchical RL stack — the policy-over-options that decides *which* skill to execute, and the intra-option policies that define *how* each skill behaves.
+
+## Problem
+
+Joint training of hierarchical policies is unstable: the high-level evaluates a moving target, and the low-level chases a non-stationary selection distribution — a co-adaptation problem that drives option collapse in methods like Option-Critic.
+
+## Approach
+
+We investigate methods for stable concurrent learning of:
+
+- **Option selection policy ($\pi_\Omega$):** Learns which option to invoke in each state, treating options as temporally extended actions
+- **Intra-option policies ($\pi_\omega$):** Each option learns its own internal policy over primitive actions, with learned initiation sets and given termination conditions

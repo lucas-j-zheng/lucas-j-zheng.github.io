@@ -1,0 +1,22 @@
+---
+title: "Kalshi Alpha Agent"
+date: "2025-12-01"
+description: "Natural language to prediction market trades with human-in-the-loop approval"
+tags: ["AI agent", "NLP", "prediction markets"]
+links:
+  Demo: "https://huggingface.co/spaces/lzheng35/kalshi-alpha-agent"
+  GitHub: "https://github.com/lucas-j-zheng/kalshi-agent"
+featured: true
+---
+
+An AI agent that converts natural language convictions into actionable prediction market trades on Kalshi — with mandatory human approval for every transaction.
+
+## How It Works
+
+1. **Analyze** — Extract trading intent from natural language
+2. **Search** — Semantic search across 30,000+ Kalshi markets using embeddings
+3. **Propose** — Generate trade proposals with recommended position sizing
+4. **Approve** — Human reviews and clicks to execute (Ghost Token validation)
+5. **Execute** — Trade placed on Kalshi
+
+Every trade requires explicit human approval via the Ghost Token security pattern. This ensures the agent assists decision-making without autonomously risking capital.
