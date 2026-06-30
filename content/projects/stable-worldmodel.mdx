@@ -1,0 +1,39 @@
+---
+title: "Latent Diffusion World Models & Policies"
+date: "2026-06-29"
+description: "A controlled study of when generative (diffusion) models beat deterministic ones in latent-space planning — isolating the multimodality × objective interaction across both halves of a model-based pipeline"
+tags: ["world models", "diffusion", "latent planning", "reinforcement learning"]
+links:
+  GitHub: "https://github.com/lucas-j-zheng/stable-worldmodel"
+featured: true
+---
+
+A three-week solo research arc (49 commits, Brown's world-models group, run on the Oscar HPC cluster) asking a sharp version of a published question: diffusion models are slower and harder to train than deterministic baselines — *when is that cost actually worth paying?* The study tests both halves of a model-based pipeline — dynamics ($p(z'|z,a)$) and policy ($p(a|s,g)$) — in a controlled, frozen-latent setting (a LeWM/SIGReg encoder mapping 224×224 images to a 192-d latent), across TwoRoom (2D navigation) and PushT (contact manipulation).
+
+**Thesis:** a generative model beats a deterministic/MSE one *only* when the conditional distribution it learns is genuinely multimodal. **Headline result:** in these robotic tasks the exploitable multimodality lives in the *policy* (many valid behaviors), not the *dynamics* (near-deterministic given the action) — reframing "diffusion loses" world-model results as the right method applied to the wrong side.
+
+## Dynamics: a clean negative
+
+Closed-loop latent MPC (CEM planning, 50 episodes) ranks a deterministic next-latent predictor above diffusion — TwoRoom 58% vs 46%/30%, PushT 16% vs 8%, and ~8× faster. A multimodality diagnostic explains why: these transitions are near-deterministic ($\det\ R^2 \approx 0.5$–0.86), so the generative model only adds sampling variance and cost.
+
+## A numerical root-cause find
+
+Diffusion dynamics initially rolled out at chance. After ruling out undertraining (20× more training left it unchanged), the cause was a numerical pathology in the cosine noise schedule: DDIM recovers $z_0$ through a $1/\sqrt{\bar\alpha}$ term, and the cosine schedule's tiny terminal $\bar\alpha$ amplifies the model's $\varepsilon$ error by up to ~2000×. Switching to x0/v-prediction (Salimans & Ho 2022) cut open-loop MSE 2.8 → 0.449 (6–9×) and collapsed sample variance 8.5 → ~0.4 — necessary, but not sufficient to flip the closed-loop ranking, which is the real finding.
+
+## Policy: the positive, hardened into a controlled claim
+
+A latent Diffusion Policy on TwoRoom (two symmetric doors; an expert that commits to a random door per episode — multimodality provable from the construction) first showed DP ≈ 41% vs a mode-averaging MLP at 18%. The MLP regresses to the mean of the two routes and drives into the wall between them; the diffusion policy commits to one mode. A negative control on unimodal demos (82% vs 84%) confirmed the effect is a multimodality × method *interaction*, not policy-class superiority.
+
+Rather than stop at the win, I attacked it: a leaky dose knob (fixed with a door-agnostic `policy_target` screen) and an architecture confound (the denoiser was a transformer; the baseline was an MLP). Adding an architecture-matched TransformerMSE baseline and 3-seed replicates shrank the headline +24 down to a genuine **+10 diffusion advantage at high multimodality, ~0 at low** — a clean dose-response, with the inflated portion of the original claim explicitly retracted.
+
+## Methodology that transfers
+
+- Select world models/policies on **closed-loop reward only** — cheaper proxies (open-loop MSE included) anti-ranked rollout quality.
+- Never compare raw conditional spread across datasets of different size/dimension; detrend first (a naive comparison produced a wrong conclusion across a 37× sample-size gap).
+- Run a multimodality **screen before any generative-vs-deterministic experiment** — a near-unimodal target means there's nothing to win.
+- The encoder must be in-distribution for the eval env (OOD latents → 0% success).
+- **Gate expensive pipelines with cheap screens:** an encoder-free POMDP screen killed two GPU-days pipelines in 15 minutes each, establishing that a bounded deterministic environment can't be made substantially multimodal in its dynamics via partial observability.
+
+## Built along the way
+
+A latent Diffusion Policy stack (trajectory denoiser, DDIM, CEM-compatible solver), the x0/v dynamics model, a synthetic-validated multimodality diagnostic (0.00 unimodal / 0.98 bimodal) with five measurement modes, an instrumented TwoRoom testbed with a tunable multimodality knob, a LeWM checkpoint converter, and a domain-portable SLURM pipeline that scaled from 5.5k to ~2M-frame datasets.
