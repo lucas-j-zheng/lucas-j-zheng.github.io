@@ -1,0 +1,47 @@
+---
+title: "2026 Senate Election Forecast"
+date: "2026-07-29"
+description: "Building a Silver-style Senate forecast from scratch — polls + fundamentals blended into a correlated Monte Carlo simulation (in progress)"
+tags: ["forecasting", "Monte Carlo", "elections", "statistics"]
+links:
+  GitHub: "https://github.com/lucas-j-zheng/senate-predictions"
+featured: true
+---
+
+An attempt to rebuild a FiveThirtyEight-style Senate forecast from scratch — not to beat Silver, but to find out how much of that kind of model's accuracy comes from the method versus the year. The model covers all ~35 seats up in 2026: a polls + fundamentals blend fed into a correlated Monte Carlo simulation. Ongoing; the deliverable is a backtested model rather than a live forecast.
+
+## Fundamentals
+
+A ridge prior fit on prior cycles' races, using the structural features available long before any polling exists — prior presidential lean, incumbency, seat history. This is the model's floor: what you can say about a race when you know nothing about the campaign.
+
+## Poll pipeline
+
+Candidate-level polls are pivoted to per-question two-party margins, keeping one question per poll under a fixed precedence (real matchup over hypothetical, likely-voter over registered-voter, then sample size). November jungle primaries are kept as the outcome being predicted; runoffs and ranked-choice-reallocated rows are dropped.
+
+Adjustments are computed strictly as-of a snapshot date, so a backtest at *N* days out can never see data that didn't exist yet:
+
+- a likely-voter shift estimated from same-poll LV/RV pairs — necessarily on the pre-selection table, since question selection destroys the pairs
+- house effects measured against the same-race consensus and empirical-Bayes shrunk, so a pollster with two polls isn't trusted like one with thirty
+- weights combining recency, sample size, and pollster rating, anchored so a fresh average-rated poll of typical size sits at 1.0
+
+## Blending
+
+Rather than a separate weighted average of two model outputs, the fundamentals prediction enters each race's poll average as a pseudo-poll with its own weight. As real polls accumulate, the prior gets diluted automatically — no hand-tuned schedule for how fast to hand the model over to the polls.
+
+That weight is tuned by *nested* leave-one-cycle-out, so the tuning procedure never sees the cycle it's evaluated on.
+
+## Correlated simulation
+
+The part that matters most and is still being built. Polling error is not independent across states — when polls miss, they tend to miss in the same direction everywhere, which is precisely why averaging more races doesn't wash it out. Simulating independent per-race noise produces confidence intervals that are far too narrow at the seat-count level. The simulation instead draws a shared national error term alongside per-state elasticities.
+
+## Validation
+
+Every claim is checked against a leave-one-cycle-out backtest rather than in-sample fit: the model is re-run at several snapshot dates per cycle, trained only on other cycles. For the poll averages specifically, the target is the historical record itself — a correct pipeline should independently reproduce the known misses of past cycles, and failing to reproduce a documented polling error means the adjustments are wrong.
+
+## Data integrity
+
+Much of the real work has been here rather than in modeling. Public returns data needed patching against known errors; at-risk upstream archives are vendored into the repo with provenance tracked, since forecasting sources have a habit of disappearing. FEC candidate matching needed fixes for state fields derived from mailing addresses, reversed names, and spelling variants before contested races matched cleanly. Polls of caucusing independents needed an override so the top Democratic answer is the independent rather than the token major-party candidate.
+
+A fundraising feature that looked promising was cut when the leave-one-cycle-out ablation didn't support it.
+
+Model outputs are written as flat parquet and CSV so a public site can consume them without coupling to the model runtime.
