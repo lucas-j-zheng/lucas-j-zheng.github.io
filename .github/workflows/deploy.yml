@@ -22,11 +22,14 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: v2/package-lock.json
       - run: npm ci --ignore-scripts
+        working-directory: v2
       - run: npm run build
+        working-directory: v2
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: out
+          path: v2/out
 
   deploy:
     needs: build
