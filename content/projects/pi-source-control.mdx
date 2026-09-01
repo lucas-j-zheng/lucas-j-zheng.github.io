@@ -1,0 +1,21 @@
+---
+title: "Pi Source Control"
+date: "2026-08-31"
+description: "A read-only, keyboard-driven source control diff reviewer for the Pi coding agent"
+tags: ["developer tools", "Pi extension", "Git", "TUI"]
+links:
+  GitHub: "https://github.com/lucas-j-zheng/pi-source-control"
+---
+
+A read-only source control reviewer that brings working-tree, staged, commit, and revision-range diffs into the Pi coding agent. Open it with `/diff` to review changes without leaving the terminal or modifying the repository.
+
+## Review Workflow
+
+- **Multiple diff sources:** Review working-tree and staged changes, recent commits, individual revisions, and two-dot or three-dot ranges
+- **Responsive terminal UI:** Navigate source, file, and diff panes entirely from the keyboard, with unified and side-by-side views
+- **Inline comments:** Attach notes to specific diff lines and send the complete review back to Pi as a single actionable message
+- **Review tracking:** Mark files as reviewed and jump directly between hunks
+
+## Safety
+
+Every Git command is checked against a read-only allowlist and executed without a shell. User-provided revisions are resolved to immutable commit IDs, large files and patches are bounded, and review state remains in memory. The extension makes no network requests and never stages, reverts, or edits repository files.
