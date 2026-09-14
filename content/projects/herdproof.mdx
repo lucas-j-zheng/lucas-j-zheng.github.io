@@ -1,0 +1,30 @@
+---
+title: "HerdProof"
+date: "2026-09-05"
+description: "Aerial cattle counting and evidence review for agricultural lending — a native-resolution YOLO detector, cross-photo deduplication, and an in-browser demo"
+tags: ["computer vision", "YOLO", "drones", "agriculture", "SLURM"]
+links:
+  Demo: "https://herdproof-demo.vercel.app/"
+  GitHub: "https://github.com/lucas-j-zheng/herdproof"
+featured: true
+---
+
+A hackathon project for counting cattle from drone photographs and turning the result into reviewable evidence for livestock lenders. Instead of trusting a single number, every count links back to the detections, the photos they came from, and the decisions the pipeline made along the way.
+
+## Detector
+
+A YOLOv8n model trained on aerial cattle imagery at native 1024×1024 tile resolution rather than downscaled frames, so small animals survive the input stage. Training, recovery, evaluation, and threshold tuning run as GPU SLURM jobs. The selected operating point sits at roughly 82% precision and 78% recall on a public benchmark, chosen for its counting tradeoff — with the caveat that some source labels omit visible cows, so those scores remain provisional until independently checked reference labels exist.
+
+## Counting across overlapping photos
+
+Drone surveys photograph the same animals many times, so per-image counts overcount. The pipeline registers nearby same-flight photos by matching static background features (with cow boxes masked out), validates a homography between them, and projects detections into the shared visible area. Observations are then matched conservatively, one-to-one, with ambiguous pairs withheld rather than guessed. Each resulting track counts once, keeps its clearest view, and unresolved edge captures are surfaced explicitly instead of silently dropped.
+
+## Evidence review
+
+- **Browser demo:** The ONNX export runs entirely client-side on a WebAssembly runtime, so an uploaded image gets real tiled inference without a backend
+- **3D field view:** Photos, terrain, and cow observations are reconstructed into an explorable world for checking counts against the ground
+- **Survey application:** Metadata and reuse checks, persistence, and export of the full evidence bundle
+
+## Validation
+
+Benchmark scores are treated as agreement with the labels, not ground truth, and the crowded-cattle failure mode has its own documented study and interface fix. Timed human review is measured separately from automated QA, which is labeled and excluded from the human numbers.
