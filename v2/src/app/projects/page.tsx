@@ -17,11 +17,12 @@ export default function ProjectsPage() {
       <section className="block">
         <h2>Projects</h2>
         <div className="body">
-          {projects.map((item) => (
+          {projects.map((item, i) => (
             <ItemRow
               key={item.meta.slug}
               meta={item.meta}
               href={`/projects/${item.meta.slug}/`}
+              index={i}
             />
           ))}
         </div>

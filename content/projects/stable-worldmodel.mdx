@@ -1,39 +1,107 @@
 ---
-title: "Latent Diffusion World Models & Policies"
-date: "2026-06-29"
-description: "A controlled study of when generative (diffusion) models beat deterministic ones in latent-space planning — isolating the multimodality × objective interaction across both halves of a model-based pipeline"
-tags: ["world models", "diffusion", "latent planning", "reinforcement learning"]
+title: "Latent Diffusion for World-Model Planning"
+date: "2026-08-05"
+description: "An independent research extension testing when diffusion helps latent dynamics, goal-conditioned policies, and model-predictive control—and documenting when it does not"
+tags: ["world models", "diffusion", "model-predictive control", "reinforcement learning"]
 links:
   GitHub: "https://github.com/lucas-j-zheng/stable-worldmodel"
 featured: true
 ---
 
-A three-week solo research arc (49 commits, Brown's world-models group, run on the Oscar HPC cluster) asking a sharp version of a published question: diffusion models are slower and harder to train than deterministic baselines — *when is that cost actually worth paying?* The study tests both halves of a model-based pipeline — dynamics ($p(z'|z,a)$) and policy ($p(a|s,g)$) — in a controlled, frozen-latent setting (a LeWM/SIGReg encoder mapping 224×224 images to a 192-d latent), across TwoRoom (2D navigation) and PushT (contact manipulation).
+An independent, two-month research extension of [Stable World Models](https://github.com/galilai-group/stable-worldmodel), developed in more than 130 authored commits and run on Brown's Oscar HPC cluster. I investigated a practical question: **when does iterative diffusion sampling improve a model-based control pipeline enough to justify its added cost?**
 
-**Thesis:** a generative model beats a deterministic/MSE one *only* when the conditional distribution it learns is genuinely multimodal. **Headline result:** in these robotic tasks the exploitable multimodality lives in the *policy* (many valid behaviors), not the *dynamics* (near-deterministic given the action) — reframing "diffusion loses" world-model results as the right method applied to the wrong side.
+I tested both halves of the pipeline—latent dynamics $p(z_{t+1:t+H}\mid z_{\le t},a_{t:t+H})$ and goal-conditioned policies $p(a_{t:t+H}\mid z_{\le t},z_g)$—using a pretrained LeWM/SIGReg visual encoder, TwoRoom navigation, PushT contact manipulation, controlled stochastic environments, matched deterministic baselines, and closed-loop planning.
 
-## Dynamics: a clean negative
+The final answer was more useful than the initial hypothesis: **conditional multimodality alone did not make diffusion win.** Representation quality, prediction parameterization, training objective, sampling depth, and replanning cadence often mattered more. Several early positive results disappeared under stronger controls; those retractions are part of the project rather than omitted failures.
 
-Closed-loop latent MPC (CEM planning, 50 episodes) ranks a deterministic next-latent predictor above diffusion — TwoRoom 58% vs 46%/30%, PushT 16% vs 8%, and ~8× faster. A multimodality diagnostic explains why: these transitions are near-deterministic ($\det\ R^2 \approx 0.5$–0.86), so the generative model only adds sampling variance and cost.
+## System I built
 
-## A numerical root-cause find
+The dynamics pipeline maps 224×224 images into 192-dimensional LeWM latents, then predicts eight future latents from three history steps and an action sequence. Its transformer denoiser has approximately 5.0 million parameters and supports cosine diffusion, DDIM sampling, and $\varepsilon$-, $x_0$-, and $v$-prediction. During CEM planning, each action candidate can be evaluated against multiple sampled futures using expected terminal distance to a goal latent.
 
-Diffusion dynamics initially rolled out at chance. After ruling out undertraining (20× more training left it unchanged), the cause was a numerical pathology in the cosine noise schedule: DDIM recovers $z_0$ through a $1/\sqrt{\bar\alpha}$ term, and the cosine schedule's tiny terminal $\bar\alpha$ amplifies the model's $\varepsilon$ error by up to ~2000×. Switching to x0/v-prediction (Salimans & Ho 2022) cut open-loop MSE 2.8 → 0.449 (6–9×) and collapsed sample variance 8.5 → ~0.4 — necessary, but not sufficient to flip the closed-loop ranking, which is the real finding.
+A parallel policy stack maps latent history and a goal latent directly to an eight-step action chunk. It includes a diffusion policy, an MLP baseline, an architecture-matched Transformer-MSE baseline, action normalization, and a solver compatible with the repository's receding-horizon policy interface.
 
-## Policy: the positive, hardened into a controlled claim
+I also built:
 
-A latent Diffusion Policy on TwoRoom (two symmetric doors; an expert that commits to a random door per episode — multimodality provable from the construction) first showed DP ≈ 41% vs a mode-averaging MLP at 18%. The MLP regresses to the mean of the two routes and drives into the wall between them; the diffusion policy commits to one mode. A negative control on unimodal demos (82% vs 84%) confirmed the effect is a multimodality × method *interaction*, not policy-class superiority.
+- Lance-based latent caching and LeWM checkpoint conversion
+- Frozen-encoder and end-to-end training paths with separate optimizers
+- Synthetic-validated conditional-multimodality diagnostics
+- Tunable random-door, hidden-drift, slip, and contact-noise environments
+- K-step probabilistic proposer benchmarks and hierarchical-planning evaluation
+- Shape, sequence-layout, checkpoint, gradient-flow, DDIM, and planner-cost tests
+- Reproducible SLURM pipelines for training, ablations, and multi-seed evaluation
 
-Rather than stop at the win, I attacked it: a leaky dose knob (fixed with a door-agnostic `policy_target` screen) and an architecture confound (the denoiser was a transformer; the baseline was an MLP). Adding an architecture-matched TransformerMSE baseline and 3-seed replicates shrank the headline +24 down to a genuine **+10 diffusion advantage at high multimodality, ~0 at low** — a clean dose-response, with the inflated portion of the original claim explicitly retracted.
+## A numerical failure mode in latent diffusion
 
-## Methodology that transfers
+The first diffusion model produced chance-level rollouts despite additional training. The cause was not model capacity: it was a numerical instability in the usual conversion from predicted noise to a clean trajectory,
 
-- Select world models/policies on **closed-loop reward only** — cheaper proxies (open-loop MSE included) anti-ranked rollout quality.
-- Never compare raw conditional spread across datasets of different size/dimension; detrend first (a naive comparison produced a wrong conclusion across a 37× sample-size gap).
-- Run a multimodality **screen before any generative-vs-deterministic experiment** — a near-unimodal target means there's nothing to win.
-- The encoder must be in-distribution for the eval env (OOD latents → 0% success).
-- **Gate expensive pipelines with cheap screens:** an encoder-free POMDP screen killed two GPU-days pipelines in 15 minutes each, establishing that a bounded deterministic environment can't be made substantially multimodal in its dynamics via partial observability.
+$$
+\hat{x}_0 = \frac{x_t-\sqrt{1-\bar\alpha_t}\,\hat\varepsilon}{\sqrt{\bar\alpha_t}}.
+$$
 
-## Built along the way
+Near the endpoint of the cosine schedule, $\bar\alpha_t$ is tiny, so a modest error in $\hat\varepsilon$ was amplified by roughly 2,000× during the first reverse step. Implementing direct $x_0$- and $v$-prediction cut open-loop MSE from approximately 2.8 to 0.449 and reduced sample variance from about 8.5 to 0.4. This made diffusion rollouts usable, although it did not make them superior in control.
 
-A latent Diffusion Policy stack (trajectory denoiser, DDIM, CEM-compatible solver), the x0/v dynamics model, a synthetic-validated multimodality diagnostic (0.00 unimodal / 0.98 bimodal) with five measurement modes, an instrumented TwoRoom testbed with a tunable multimodality knob, a LeWM checkpoint converter, and a domain-portable SLURM pipeline that scaled from 5.5k to ~2M-frame datasets.
+## Dynamics: sampling usually did not pay for itself
+
+After correcting the parameterization, iterative DDIM still failed to beat one-step prediction or matched deterministic controls in the tested systems. Under extreme TwoRoom slip, for example:
+
+| DDIM inference steps | Closed-loop success |
+| ---: | ---: |
+| 1 | 79.3% |
+| 5 | 77.0% |
+| 20 | 74.3% |
+
+A replanning-cadence control reduced the one-versus-20-step gap from 5.0 to 1.7 points, showing that frequent replanning amplified the penalty. The defensible conclusion is bounded: **under these architectures and MPC protocols, additional reverse-diffusion steps added compute without improving control.** It is not a universal claim about diffusion world models.
+
+## Policy: an apparent win that vanished under real seeding
+
+The first goal-conditioned experiment appeared decisive: a diffusion policy scored about 41%, while an MLP scored 18%. I then found two confounds. The baseline used a weaker architecture, and the original training script did not fully seed the data pipeline.
+
+After introducing an architecture-matched Transformer-MSE baseline and fixing Python, NumPy, PyTorch, worker, and DataLoader seeding, the final eight-seed results were:
+
+| Demonstrations | Diffusion policy | Transformer-MSE |
+| --- | ---: | ---: |
+| Random-door / multimodal | 34.9 ± 3.6% | 33.5 ± 7.3% |
+| Fixed-door / unimodal | 32.5 ± 2.8% | 31.3 ± 2.7% |
+
+The original `+24` result—and a later provisional `+10` claim—did not survive. The final evidence shows essentially tied mean performance. Diffusion may have reduced training variance on the heterogeneous demonstrations, but it did not improve average success.
+
+## The representation bottleneck
+
+I designed a local conditional-multimodality diagnostic that standardizes the conditioning space, finds nearest-neighbor neighborhoods, removes a local linear trend, and measures residual structure with bimodality coefficients and one-versus-two-component Gaussian-mixture fits. Synthetic controls separated unimodal from deliberately bimodal targets.
+
+In stochastic-contact PushT, the raw state transitions were strongly multimodal, but the frozen visual encoder largely removed that structure:
+
+- Contact perturbation 0.5: residual-bimodality fraction `0.981 → 0.029`
+- Contact perturbation 1.0: residual-bimodality fraction `0.978 → 0.064`
+
+This suggested that a generative latent predictor cannot recover modes that its representation has discarded. The diagnostic also saturated on an observed-noise control, so these numbers are evidence of a bottleneck—not a general-purpose statistical proof.
+
+## End-to-end training and a falsified mechanism
+
+Fine-tuning the encoder initially collapsed latent geometry and planning. Stop-gradient targets and variance/covariance regularization preserved more structure, but planning remained weak. I then found a concrete BatchNorm mismatch: training used batch statistics while planning used stale running statistics, changing the same images' latent norms from about 0.14 in training mode to 3.55 in evaluation mode.
+
+I implemented and tested a frozen-normalization fix. It eliminated the mismatch, but the corrected Oscar runs still did not recover planning performance. The bug was real; the proposed explanation of the end-to-end failure was not sufficient.
+
+## Distributional subgoals: better fit, no control gain
+
+A separate K-step proposer benchmark used episode-held-out data to compare MSE, Gaussian, mixture-density, k-nearest-neighbor, and diffusion predictors. Distributional models represented conditional support more faithfully than MSE in multimodal cells. Yet that offline advantage did not translate into hierarchical control:
+
+- Sampled latent subgoal: 24.5%
+- Mean latent subgoal: 26.5%
+- Flat planner: 28.5%
+
+Replanning and observation-grounded retrieval largely removed the mean-prediction failure the hierarchy was intended to solve.
+
+## Limitations
+
+This remains exploratory systems research rather than a benchmark result.
+
+- The main training/validation split is random over overlapping trajectory clips, not episodes, so adjacent windows from one episode can cross the split.
+- Most closed-loop starts and goals come from the same dataset distribution used for training; relative comparisons are controlled, but they do not establish held-out trajectory generalization.
+- The PushT baseline used an incorrect block scale and a smaller predictor in much of the study, producing performance far below the published reference. Those absolute PushT results require a corrected re-baseline.
+- The multimodality statistic is custom and primarily one-dimensional after local residual projection.
+- Most conclusions come from TwoRoom and custom PushT variants, not a broad environment suite.
+
+## Takeaway
+
+The project began as an attempt to find where diffusion beats deterministic world models. It became a controlled investigation of why that simple thesis fails. The strongest outcomes were the parameterization diagnosis, matched baselines, representation and BatchNorm failure analyses, reusable planning infrastructure, and the willingness to retract positive results when seeding and architecture controls removed them.

@@ -14,10 +14,11 @@ export default function Home() {
       <section className="hero">
         <div className="hero-text">
           <h1>Lucas Zheng</h1>
+        <p className="role">
+          Incoming Quantitative Trading Intern @ Citadel&nbsp;Securities
+        </p>
         <p>
-          CS + Applied Math at Brown&nbsp;&rsquo;27, and an incoming
-          quantitative trading intern at Citadel&nbsp;Securities
-          (2027). I do hierarchical
+          CS + Applied Math at Brown&nbsp;&rsquo;27. I do hierarchical
           reinforcement learning research at Prof.&nbsp;Konidaris&rsquo;s{" "}
           <a href="http://irl.cs.brown.edu/">Intelligent Robot&nbsp;Lab</a>, and
           I build things: forecasting models, agents, world models.
@@ -42,11 +43,12 @@ export default function Home() {
       <section className="block" id="research">
         <h2>Research</h2>
         <div className="body">
-          {research.map((item) => (
+          {research.map((item, i) => (
             <ItemRow
               key={item.meta.slug}
               meta={item.meta}
               href={`/research/${item.meta.slug}/`}
+              index={i}
             />
           ))}
         </div>
@@ -55,11 +57,12 @@ export default function Home() {
       <section className="block" id="projects">
         <h2>Projects</h2>
         <div className="body">
-          {featured.map((item) => (
+          {featured.map((item, i) => (
             <ItemRow
               key={item.meta.slug}
               meta={item.meta}
               href={`/projects/${item.meta.slug}/`}
+              index={i}
             />
           ))}
           <Link className="more" href="/projects/">
@@ -71,11 +74,12 @@ export default function Home() {
       <section className="block" id="writing">
         <h2>Writing</h2>
         <div className="body">
-          {writing.map((item) => (
+          {writing.map((item, i) => (
             <ItemRow
               key={item.meta.slug}
               meta={item.meta}
               href={`/writing/${item.meta.slug}/`}
+              index={i}
             />
           ))}
         </div>
