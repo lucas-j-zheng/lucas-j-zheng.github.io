@@ -15,7 +15,9 @@ export default function Home() {
         <div className="hero-text">
           <h1>Lucas Zheng</h1>
         <p>
-          CS + Applied Math at Brown&nbsp;&rsquo;27. I do hierarchical
+          CS + Applied Math at Brown&nbsp;&rsquo;27, and an incoming
+          quantitative trading intern at Citadel&nbsp;Securities
+          (2027). I do hierarchical
           reinforcement learning research at Prof.&nbsp;Konidaris&rsquo;s{" "}
           <a href="http://irl.cs.brown.edu/">Intelligent Robot&nbsp;Lab</a>, and
           I build things: forecasting models, agents, world models.
